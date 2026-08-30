@@ -4,8 +4,4 @@ scikit-learn
 matplotlib
 seaborn
 rapidfuzz
-transformers
-datasets
-torch
-shap
 pytest
