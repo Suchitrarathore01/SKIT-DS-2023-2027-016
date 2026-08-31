@@ -1,11 +1,17 @@
 from fastapi import FastAPI
-from pydantic import BaseModel, HttpUrl
+from fastapi.middleware.cors import CORSMiddleware
+from app.routes.scan import router as scan_router
 
 app = FastAPI()
 
 
-class ScanRequest(BaseModel):
-    url: HttpUrl
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -13,10 +19,4 @@ def home():
     return {"message": "ChainShield Backend is Running!"}
 
 
-@app.post("/scan")
-def scan_url(request: ScanRequest):
-    return {
-        "url": request.url,
-        "status": "received",
-        "message": "URL received successfully"
-    }
+app.include_router(scan_router)
