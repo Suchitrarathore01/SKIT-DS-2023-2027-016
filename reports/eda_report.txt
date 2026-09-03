@@ -6,10 +6,10 @@ Name: count, dtype: int64
 Total rows: 5574
 
 === Message length by class ===
-        count        mean        std  ...    50%    75%    max
-label                                 ...                     
-ham    4827.0   71.440232  58.321812  ...   52.0   93.0  910.0
-spam    747.0  138.634538  28.854103  ...  149.0  157.0  223.0
+        count  ...    max
+label          ...       
+ham    4827.0  ...  910.0
+spam    747.0  ...  223.0
 
 [2 rows x 8 columns]
 
