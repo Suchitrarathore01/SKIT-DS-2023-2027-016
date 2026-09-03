@@ -10,7 +10,13 @@ def load_raw(path: Path = RAW_PATH) -> pd.DataFrame:
         raise FileNotFoundError(
             f"{path} not found. Place your smish.csv into data/raw/ first."
         )
-    df = pd.read_csv(path, encoding="latin-1")
+    df = pd.read_csv(path, encoding="utf-8-sig")
+
+    # Strip BOM characters and whitespace from column names
+    df.columns = [
+        str(c).replace("\ufeff", "").replace("ï»¿", "").strip()
+        for c in df.columns
+    ]
 
     # Try to auto-detect text/label columns for common Kaggle SMS formats
     cols_lower = {c.lower(): c for c in df.columns}

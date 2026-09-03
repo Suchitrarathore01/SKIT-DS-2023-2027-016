@@ -1,0 +1,60 @@
+=== Class balance ===
+label
+ham     4827
+spam     747
+Name: count, dtype: int64
+Total rows: 5574
+
+=== Message length by class ===
+        count        mean        std  ...    50%    75%    max
+label                                 ...                     
+ham    4827.0   71.440232  58.321812  ...   52.0   93.0  910.0
+spam    747.0  138.634538  28.854103  ...  149.0  157.0  223.0
+
+[2 rows x 8 columns]
+
+=== URL presence rate by class ===
+label
+ham     0.000414
+spam    0.139224
+Name: has_url, dtype: float64
+
+=== Exact duplicate messages: 415 ===
+
+=== Top 15 words per class ===
+
+-- ham --
+u       982
+me      760
+my      746
+        739
+that    486
+have    439
+but     424
+so      411
+not     411
+are     410
+at      379
+do      378
+can     376
+i'm     369
+if      351
+Name: count, dtype: int64
+
+-- spam --
+call      345
+free      214
+now       189
+or        188
+2         171
+txt       147
+u         147
+ur        144
+have      135
+from      128
+mobile    123
+text      120
+stop      115
+claim     113
+with      109
+Name: count, dtype: int64
