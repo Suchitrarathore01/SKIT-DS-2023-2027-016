@@ -5,16 +5,6 @@ phishing) in real time. Known threats are checked instantly against a blockchain
 registry; unknown messages are classified using machine learning, and confirmed 
 threats get added to the registry so they are recognized instantly next time.
 
-## Team and components
-
-This is a 4-person team project. Each person owns one component:
-
-| Component | Owner | Folder |
-|---|---|---|
-| ML detection (phishing/smishing classification) | [Name] | `src/`, `data/`, `models/` |
-| Smart contract (blockchain threat registry) | [Name] | `contracts/` |
-| Backend (connects ML model and contract, serves predictions) | [Name] | `backend/` |
-| Frontend (Chrome extension and dashboard) | [Name] | `frontend/` |
 
 ## How it works
 

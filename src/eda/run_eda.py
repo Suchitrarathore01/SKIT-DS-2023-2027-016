@@ -1,4 +1,4 @@
-"""Exploratory data analysis on the smish dataset. Outputs charts + a text report to reports/."""
+"""Exploratory data analysis on the smish dataset. Outputs charts to reports/."""
 import re
 from pathlib import Path
 
@@ -66,7 +66,6 @@ def run_eda():
         lines.append(str(top))
 
     report_text = "\n".join(lines)
-    (REPORT_DIR / "eda_report.txt").write_text(report_text)
     print(report_text)
     print(f"\nCharts saved to {REPORT_DIR}/")
 
