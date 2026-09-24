@@ -36,4 +36,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add weekly_reports/
           git diff --cached --quiet || git commit -m "Auto-generate weekly Form-3 report"
-          git push
+          git pull --rebase origin main
+          git push origin main
