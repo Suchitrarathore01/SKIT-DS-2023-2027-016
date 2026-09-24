@@ -1,0 +1,39 @@
+name: Generate Weekly Form-3 Report
+
+on:
+  schedule:
+    - cron: "29 18 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install reportlab
+
+      - name: Generate weekly report
+        run: |
+          python generate_report.py weekly
+
+      - name: Commit and push report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add weekly_reports/
+          git diff --cached --quiet || git commit -m "Auto-generate weekly Form-3 report"
+          git push
