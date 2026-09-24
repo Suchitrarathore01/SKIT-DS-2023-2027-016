@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,6 +37,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add weekly_reports/
-          git diff --cached --quiet || git commit -m "Auto-generate weekly Form-3 report"
-          git pull --rebase origin main
-          git push origin main
+
+          if git diff --cached --quiet; then
+            echo "No report changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Auto-generate weekly Form-3 report"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
