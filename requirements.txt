@@ -1,3 +1,10 @@
 fastapi
 uvicorn
 pydantic
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+rapidfuzz
+pytest
