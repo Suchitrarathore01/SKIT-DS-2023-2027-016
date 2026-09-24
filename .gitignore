@@ -1,26 +1,2 @@
-# secrets
-.env
-*.key
-kaggle.json
-
-# data
-data/raw/
-data/processed/
-
-# models (weights too large for git)
-models/*/*.bin
-models/*/*.safetensors
-models/*/pytorch_model.bin
-
-# reports/logs (regenerable)
-reports/*.png
-logs/*.log
-
-# python
 __pycache__/
-*.pyc
-.venv/
-*.egg-info/
-
-# jupyter
-.ipynb_checkpoints/
+.env
