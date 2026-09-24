@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
+
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -19,6 +20,7 @@ from reportlab.platypus import (
     Image,
     KeepTogether,
 )
+
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 
@@ -66,6 +68,7 @@ def get_repo_info():
         repo_name = os.path.basename(root_path)
 
     except Exception:
+
         try:
             remote_url = subprocess.check_output(
                 ["git", "config", "--get", "remote.origin.url"],
@@ -103,9 +106,8 @@ def get_week_window():
 
         Friday → Thursday
 
-    The current week is always used.
-
     Example:
+
         Friday 25 Sep 2026
         →
         Thursday 01 Oct 2026
@@ -143,13 +145,17 @@ def get_git_metrics(interval="weekly"):
 
     today = datetime.date.today()
 
+    # ---------------------------------------------------------
+    # WEEKLY
+    # ---------------------------------------------------------
+
     if interval == "weekly":
 
         week_start, week_end = get_week_window()
 
         since_date = week_start.strftime("%Y-%m-%d")
 
-        # Git --until is exclusive/inclusive-sensitive,
+        # Git --until can be exclusive/inclusive sensitive,
         # therefore use the next day.
         until_date = (
             week_end + datetime.timedelta(days=1)
@@ -172,6 +178,10 @@ def get_git_metrics(interval="weekly"):
             "--numstat",
         ]
 
+    # ---------------------------------------------------------
+    # MONTHLY
+    # ---------------------------------------------------------
+
     elif interval == "monthly":
 
         since_date = (
@@ -192,6 +202,10 @@ def get_git_metrics(interval="weekly"):
             f"Last 30 Days (Since {since_date})"
         )
 
+    # ---------------------------------------------------------
+    # FINAL
+    # ---------------------------------------------------------
+
     else:
 
         git_args = [
@@ -206,6 +220,10 @@ def get_git_metrics(interval="weekly"):
         scope_title = (
             "Complete Project Lifecycle (All Commits)"
         )
+
+    # ---------------------------------------------------------
+    # RUN GIT COMMAND
+    # ---------------------------------------------------------
 
     try:
 
@@ -269,6 +287,7 @@ def get_git_metrics(interval="weekly"):
             parts = line.split("|||")
 
             if len(parts) < 5:
+                current_author = None
                 continue
 
             sha = parts[1].strip()
@@ -276,11 +295,47 @@ def get_git_metrics(interval="weekly"):
             date_str = parts[3].strip()
             msg = parts[4].strip()
 
+            # -------------------------------------------------
+            # STRICT AUTHOR DATE FILTER
+            # -------------------------------------------------
+            #
+            # This is the important fix.
+            #
+            # Git initially filters using commit date.
+            # We additionally verify the displayed AUTHOR DATE
+            # against the exact Friday → Thursday window.
+            #
+
+            if interval == "weekly":
+
+                try:
+
+                    commit_date = datetime.datetime.strptime(
+                        date_str,
+                        "%Y-%m-%d"
+                    ).date()
+
+                except ValueError:
+
+                    current_author = None
+                    continue
+
+                if not (
+                    week_start <= commit_date <= week_end
+                ):
+
+                    current_author = None
+                    continue
+
+            # -------------------------------------------------
             # Ignore GitHub automation bots
+            # -------------------------------------------------
+
             if (
                 "bot" in author.lower()
                 or "github-actions" in author.lower()
             ):
+
                 current_author = None
                 continue
 
@@ -296,16 +351,20 @@ def get_git_metrics(interval="weekly"):
                     author.lower() == member_name.lower()
                     or author.lower() == username.lower()
                 ):
+
                     matched_author = member_name
                     break
 
             # If author is not a registered team member,
             # do not invent a team contribution.
+
             if matched_author is None:
+
                 current_author = None
                 continue
 
             current_author = matched_author
+
             current_date_str = date_str
 
             students[current_author]["commits"] += 1
@@ -315,7 +374,11 @@ def get_git_metrics(interval="weekly"):
             )
 
             student_logs[current_author].append(
-                (date_str, sha, msg)
+                (
+                    date_str,
+                    sha,
+                    msg
+                )
             )
 
             # -------------------------------------------------
@@ -379,6 +442,7 @@ def get_git_metrics(interval="weekly"):
                     ]["deleted"] += deleted
 
                 except ValueError:
+
                     pass
 
     return (
@@ -1212,6 +1276,7 @@ def generate_pdf(interval="weekly"):
             )
 
             # Mentor marks column spans all commit rows
+
             if num_rows > 1:
 
                 log_table.setStyle(
@@ -1275,7 +1340,7 @@ def generate_pdf(interval="weekly"):
 
         Paragraph(
             "<b>Signature:</b> "
-            "______________________________",
+            "____________________________________________",
             sig_block_style
         ),
     ]
@@ -1297,7 +1362,7 @@ def generate_pdf(interval="weekly"):
 
         Paragraph(
             "<b>Signature:</b> "
-            "______________________________",
+            "____________________________________________",
             sig_block_style
         ),
     ]
