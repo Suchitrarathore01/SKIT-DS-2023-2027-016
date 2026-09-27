@@ -19,8 +19,8 @@ threats get added to the registry so they are recognized instantly next time.
 ## Setup
 
 ```bash
-git clone https://github.com/<owner>/chainshield.git
-cd chainshield
+git clone https://github.com/<owner>/SKIT-DS-2023-2027-016.git
+cd SKIT-DS-2023-2027-016
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
