@@ -1,0 +1,88 @@
+{
+    "project_start": "2026-09-04",
+    "weeks": [
+        {
+            "week_number": 1,
+            "start": "2026-09-04",
+            "end": "2026-09-10",
+            "report": "weekly_reports\\week_01\\Chainshield_Week_01_Weekly_Progress_Report_Form-3_2026-09-10.pdf",
+            "total_commits": 2,
+            "total_added": 559,
+            "total_deleted": 153,
+            "total_net_loc": 406,
+            "members": {
+                "Suchitrarathore01": {
+                    "commits": 2,
+                    "added": 559,
+                    "deleted": 153,
+                    "net_loc": 406,
+                    "active_days": 1
+                }
+            }
+        },
+        {
+            "week_number": 2,
+            "start": "2026-09-11",
+            "end": "2026-09-17",
+            "report": "weekly_reports\\week_02\\Chainshield_Week_02_Weekly_Progress_Report_Form-3_2026-09-17.pdf",
+            "total_commits": 1,
+            "total_added": 582,
+            "total_deleted": 0,
+            "total_net_loc": 582,
+            "members": {
+                "Shrestha-Swami": {
+                    "commits": 1,
+                    "added": 582,
+                    "deleted": 0,
+                    "net_loc": 582,
+                    "active_days": 1
+                }
+            }
+        },
+        {
+            "week_number": 3,
+            "start": "2026-09-18",
+            "end": "2026-09-24",
+            "report": "weekly_reports\\week_03\\Chainshield_Week_03_Weekly_Progress_Report_Form-3_2026-09-24.pdf",
+            "total_commits": 16,
+            "total_added": 2455,
+            "total_deleted": 58,
+            "total_net_loc": 2397,
+            "members": {
+                "Sourabh Sharma": {
+                    "commits": 15,
+                    "added": 1837,
+                    "deleted": 58,
+                    "net_loc": 1779,
+                    "active_days": 3
+                },
+                "Shrestha-Swami": {
+                    "commits": 1,
+                    "added": 618,
+                    "deleted": 0,
+                    "net_loc": 618,
+                    "active_days": 1
+                }
+            }
+        },
+        {
+            "week_number": 4,
+            "start": "2026-09-25",
+            "end": "2026-10-01",
+            "report": "weekly_reports\\week_04\\Chainshield_Week_04_Weekly_Progress_Report_Form-3_2026-10-01.pdf",
+            "total_commits": 1,
+            "total_added": 130,
+            "total_deleted": 1,
+            "total_net_loc": 129,
+            "members": {
+                "Shrestha-Swami": {
+                    "commits": 1,
+                    "added": 130,
+                    "deleted": 1,
+                    "net_loc": 129,
+                    "active_days": 1
+                }
+            }
+        }
+    ]
+}
