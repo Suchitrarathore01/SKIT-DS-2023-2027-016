@@ -1,2 +1,35 @@
+# Python
 __pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Secrets
 .env
+*.key
+kaggle.json
+
+# Data
+data/raw/
+data/processed/
+data/incoming/
+
+# Model weights
+models/*/*.bin
+models/*/*.safetensors
+models/*/pytorch_model.bin
+
+# Reports
+reports/*.png
+
+# Node / Frontend
+node_modules/
+frontend/*/build/
+frontend/*/dist/
+
+# Hardhat
+contracts/cache/
+contracts/artifacts/
+
+# Logs
+logs/*.log
