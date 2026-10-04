@@ -1,13 +1,16 @@
 import logging
 
-from app.services.scan_history import add_scan, get_scan_history
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 from app.schemas.scan import ScanRequest, ScanResponse
 from app.services.url_processor import process_url
 from app.services.security_checker import (
     check_url_security,
     calculate_risk_level
 )
+from app.services.scan_database import save_scan, get_scans
+from app.database.dependencies import get_db
 
 router = APIRouter()
 
@@ -15,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/scan", response_model=ScanResponse)
-def scan_url(request: ScanRequest):
+def scan_url(
+    request: ScanRequest,
+    db: Session = Depends(get_db)
+):
     logger.info("Scan request received")
 
     try:
@@ -32,7 +38,7 @@ def scan_url(request: ScanRequest):
             security_result["findings"]
         )
 
-                # Create scan result
+        # Create scan result
         result = {
             "url": url,
             "status": "processed",
@@ -46,8 +52,8 @@ def scan_url(request: ScanRequest):
             "findings": security_result["findings"]
         }
 
-        # Save scan result to history
-        add_scan(result)
+        # Save scan result to database
+        save_scan(db, result)
 
         return result
 
@@ -66,6 +72,10 @@ def scan_url(request: ScanRequest):
             "risk_level": "UNKNOWN",
             "findings": []
         }
+
+
 @router.get("/scan/history")
-def scan_history():
-    return get_scan_history()
+def scan_history(
+    db: Session = Depends(get_db)
+):
+    return get_scans(db)
