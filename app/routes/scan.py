@@ -1,5 +1,6 @@
 import logging
 
+from app.services.scan_history import add_scan, get_scan_history
 from fastapi import APIRouter
 from app.schemas.scan import ScanRequest, ScanResponse
 from app.services.url_processor import process_url
@@ -31,7 +32,8 @@ def scan_url(request: ScanRequest):
             security_result["findings"]
         )
 
-        return {
+                # Create scan result
+        result = {
             "url": url,
             "status": "processed",
             "message": "URL processed successfully",
@@ -43,6 +45,11 @@ def scan_url(request: ScanRequest):
             "risk_level": risk_level,
             "findings": security_result["findings"]
         }
+
+        # Save scan result to history
+        add_scan(result)
+
+        return result
 
     except Exception:
         logger.exception("Error while processing URL")
@@ -59,3 +66,6 @@ def scan_url(request: ScanRequest):
             "risk_level": "UNKNOWN",
             "findings": []
         }
+@router.get("/scan/history")
+def scan_history():
+    return get_scan_history()
