@@ -11,3 +11,5 @@ pytest
 nltk
 pycryptodome
 py-solc-x
+web3
+python-dotenv

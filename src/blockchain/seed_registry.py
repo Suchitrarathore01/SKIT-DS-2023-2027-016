@@ -32,6 +32,12 @@ from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 from src.blockchain.canonicalize import canonicalize_message, canonicalize_url
 from src.blockchain.hashing import generate_message_hash, generate_url_hash
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 class ThreatTypeEnum(IntEnum):
     """Solidity ThreatType enum mapping."""
@@ -350,6 +356,16 @@ def submit_seeds_to_blockchain(
     if not active_key:
         raise ValueError("Missing private key. Provide --private-key or set SIGNER_PRIVATE_KEY.")
     if not contract_address:
+        config_path = Path("contracts/configs/contract_addresses.json")
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+                    contract_address = cfg.get("sepolia", {}).get("contractAddress")
+            except Exception:
+                pass
+
+    if not contract_address:
         raise ValueError("Missing contract address. Provide --contract-address.")
 
     w3 = Web3(Web3.HTTPProvider(active_rpc))
@@ -385,6 +401,11 @@ def submit_seeds_to_blockchain(
     skipped_count = 0
     tx_hashes: List[str] = []
 
+    current_nonce = max(
+        w3.eth.get_transaction_count(caller_address, "pending"),
+        w3.eth.get_transaction_count(caller_address, "latest"),
+    )
+
     for i, record in enumerate(records, start=1):
         # Convert hex string to bytes32 bytes
         hash_bytes = bytes.fromhex(record.threatHash[2:]) if record.threatHash.startswith("0x") else bytes.fromhex(record.threatHash)
@@ -395,8 +416,11 @@ def submit_seeds_to_blockchain(
             skipped_count += 1
             continue
 
-        # Prepare transaction
-        nonce = w3.eth.get_transaction_count(caller_address)
+        # Prepare transaction with dynamic EIP-1559 gas pricing
+        nonce = current_nonce
+        latest_block = w3.eth.get_block("latest")
+        base_fee = latest_block.get("baseFeePerGas", w3.to_wei(20, "gwei"))
+        priority_fee = w3.to_wei(2, "gwei")
         tx = contract.functions.submitThreat(
             hash_bytes,
             record.threatType,
@@ -405,14 +429,15 @@ def submit_seeds_to_blockchain(
         ).build_transaction({
             "from": caller_address,
             "nonce": nonce,
-            "gas": 150000,
-            "maxFeePerGas": w3.to_wei("30", "gwei"),
-            "maxPriorityFeePerGas": w3.to_wei("2", "gwei"),
+            "gas": 500000,
+            "maxFeePerGas": base_fee * 2 + priority_fee,
+            "maxPriorityFeePerGas": priority_fee,
         })
 
         signed = w3.eth.account.sign_transaction(tx, private_key=active_key)
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
         tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        current_nonce += 1
 
         if tx_receipt.status != 1:
             raise RuntimeError(f"Transaction failed for record {record.threatHash}: tx={tx_hash.hex()}")
@@ -555,11 +580,22 @@ def main(cli_args: Optional[List[str]] = None) -> int:
         print("\n" + "!" * 60)
         print("ON-CHAIN SUBMISSION REQUESTED")
         print("!" * 60)
-        submit_seeds_to_blockchain(
+        res = submit_seeds_to_blockchain(
             records=records,
             rpc_url=args.rpc_url,
             contract_address=args.contract_address,
         )
+        print("\n" + "=" * 60)
+        print("SEED SUBMISSION SUMMARY")
+        print("=" * 60)
+        print(f"Total records processed: {res['total_records']}")
+        print(f"Submitted on-chain:      {res['submitted']}")
+        print(f"Skipped (already exist): {res['skipped_existing']}")
+        if res["tx_hashes"]:
+            print("Transaction Hashes:")
+            for tx_h in res["tx_hashes"]:
+                print(f"  - {tx_h}")
+        print("=" * 60)
     else:
         print("\nDRY RUN COMPLETE — No blockchain transactions were sent.")
         print("To submit to an EVM network, run with --submit and provide contract credentials.")

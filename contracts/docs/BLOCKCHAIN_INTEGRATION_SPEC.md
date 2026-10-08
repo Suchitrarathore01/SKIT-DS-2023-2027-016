@@ -487,3 +487,47 @@ The seeding pipeline enforces complete data minimization:
     "confidence": 100
   }
   ```
+
+---
+
+## 10. Sepolia Deployment & Controlled Verification
+
+### 1. Architecture & Deployment Mechanism
+Contract deployment is implemented via a pure Python Web3.py workflow in `src/blockchain/deploy.py`, avoiding the need for an external Node.js/Hardhat stack:
+- **Target Network**: Ethereum Sepolia Testnet (Chain ID `11155111`).
+- **Contract Source**: `contracts/ThreatRegistry.sol` (compiled via `py-solc-x` targeting solc `^0.8.20`).
+- **ABI Artifact**: `contracts/abi/ThreatRegistry.json`.
+- **Config Storage**: Deployed addresses and transaction receipts are recorded in `contracts/configs/contract_addresses.json`.
+
+### 2. Environment Configuration & Secret Isolation
+The deployment and verification pipelines strictly isolate credentials:
+- **Required Variables**:
+  - `SEPOLIA_RPC_URL`: JSON-RPC endpoint for Sepolia (e.g. Infura, Alchemy, or public node).
+  - `SIGNER_PRIVATE_KEY`: Private key of the deployer wallet (funded with SepoliaETH).
+- **Security Constraints**:
+  - Never hardcoded, printed, logged, or serialized into JSON configs or Git commits.
+  - `.env` is explicitly ignored by Git (`.gitignore`).
+  - Template credentials are provided in `.env.example`.
+
+### 3. Pre-Deployment Verifications & Failure Safety
+Before broadcasting any transaction, `deploy.py` performs rigorous pre-flight checks:
+1. **Connectivity Check**: Verifies RPC node responsiveness.
+2. **Chain ID Enforcement**: Strictly verifies `eth.chain_id == 11155111` to prevent accidental deployment to unintended networks or mainnet.
+3. **Balance Validation**: Validates deployer balance > 0 ETH to prevent stalled zero-gas transactions.
+4. **Bytecode & ABI Integrity**: Verifies compiled bytecode is non-empty and contains all required methods.
+
+### 4. Post-Deployment Ownership Validation
+Following mining of the deployment transaction:
+- The script queries `owner()` on the newly deployed contract address.
+- Deployment is only marked successful if `owner() == deployer_address`.
+- The deployed address, transaction hash, block number, and timestamp are atomically updated in `contracts/configs/contract_addresses.json`.
+
+### 5. Controlled Post-Deployment Verification (`src/blockchain/verify_deployment.py`)
+Post-deployment verification executes functional end-to-end tests against the live contract using synthetic, deterministic test hashes (zero PII):
+1. **Owner Check**: Confirms caller is the recognized contract owner.
+2. **Initial Negative Check**: Asserts `threatExists(0xaaaa...) == false`.
+3. **Single Test Submission**: Submits `0xaaaa...` as a URL threat (`verdict = 1`, `confidence = 100`).
+4. **Positive Check**: Asserts `threatExists(0xaaaa...) == true`.
+5. **Metadata Verification**: Queries `getThreat(0xaaaa...)` and validates all returned fields (`threatType`, `verdict`, `confidence`, `submittedAt`, `submitter`).
+6. **Duplicate Rejection Check**: Confirms re-submitting the same hash reverts (`DuplicateHash`).
+7. **Unauthorized Write Check**: Simulates transaction from an unauthorized account and verifies reversion (`NotOwner`).
