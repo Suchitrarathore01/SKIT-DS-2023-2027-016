@@ -8,3 +8,6 @@ matplotlib
 seaborn
 rapidfuzz
 pytest
+nltk
+pycryptodome
+py-solc-x
