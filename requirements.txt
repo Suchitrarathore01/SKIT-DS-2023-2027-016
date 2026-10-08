@@ -9,3 +9,4 @@ seaborn
 rapidfuzz
 pytest
 nltk
+pycryptodome
