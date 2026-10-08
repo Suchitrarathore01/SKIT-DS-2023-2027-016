@@ -266,3 +266,152 @@ Explicit prefixes (`"message:"` and `"url:"`) guarantee domain separation:
 | **URL** | `"http://example.com/"` | `http://example.com/` | `0x3ec488dfef911dbcc0d4daddec0e7acb656282479e308c95702ed699b2138321` *(Identical)* |
 | **URL** | `"https://example.com:443/login?b=2&a=1"` | `https://example.com/login?a=1&b=2` | `0x7c73fa93433d944c6934cbbca689ca6485e94b819fbc746140e06001a4e21a24` |
 | **URL** | `"https://example.com/login"` | `https://example.com/login` | `0x44bfbc050e6ebfd7f474cf70b6d34e9e0d1b32d1ef1066c0d829141be3f6da21` |
+
+---
+
+## 8. Solidity Threat Registry Smart Contract (`ThreatRegistry.sol`)
+
+### 1. Architectural Purpose & Exact-Hash Registry Model
+The `ThreatRegistry` smart contract functions as a tamper-evident, decentralized key-value registry of known threat fingerprints on Ethereum/EVM networks (e.g. Sepolia testnet).
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                   ARCHITECTURAL SEPARATION OF DUTIES                  │
+├───────────────────────────────────┬────────────────────────────────────┤
+│       BLOCKCHAIN REGISTRY         │        MACHINE LEARNING            │
+│   (Immutable Exact-Hash Lookup)   │     (Generalization & Inference)   │
+├───────────────────────────────────┼────────────────────────────────────┤
+│ • Fast-path exact lookup          │ • Slow-path inference & heuristics │
+│ • O(1) deterministic check        │ • Semantic classification          │
+│ • Zero false positives for known  │ • Paraphrase / mutation detection  │
+│ • No NLP, tokenization, or ML     │ • Analyzes previously unseen data  │
+│ • Stores only fixed bytes32 keys  │ • Computes verdict & confidence    │
+└───────────────────────────────────┴────────────────────────────────────┘
+```
+
+The smart contract acts purely as an on-chain ledger of previously verified threat fingerprints. It never evaluates similarity, never parses natural language, and never alters or inspects message contents.
+
+### 2. Identifier Type: `bytes32`
+- Every threat is uniquely keyed by a `bytes32` value (`threatHash`), matching the 256-bit Keccak digest output of the off-chain pipeline (`generate_message_hash` or `generate_url_hash`).
+- Domain separation is incorporated off-chain before hashing (`message:...` vs `url:...`), ensuring that the contract handles all identifiers uniformly as opaque 32-byte values.
+
+### 3. Contract State & Storage Layout
+
+```solidity
+enum ThreatType {
+    MESSAGE, // 0
+    URL      // 1
+}
+
+struct Threat {
+    ThreatType threatType;   // MESSAGE (0) or URL (1)
+    uint8      verdict;      // 0 = benign, 1 = threat
+    uint16     confidence;   // 0–100 (percentage)
+    uint64     submittedAt;  // block.timestamp (UNIX seconds)
+    address    submitter;    // msg.sender at submission
+}
+```
+
+Storage mapping:
+```solidity
+mapping(bytes32 => Threat) private _threats;
+mapping(bytes32 => bool)   private _exists;
+uint256                    public  threatCount;
+```
+- An explicit `_exists` boolean mapping avoids relying on default/zero-value struct members as sentinel existence markers.
+- `threatCount` tracks total registrations.
+
+### 4. Public Interface
+
+#### A. Read-Only Existence Query (`threatExists`)
+```solidity
+function threatExists(bytes32 threatHash) external view returns (bool exists);
+```
+- Returns `true` if `threatHash` was previously registered; `false` otherwise.
+- Gas cost: Single EVM `SLOAD` operation (~2,100 gas un-warmed, ~100 gas warm).
+- Does not revert on unregistered hashes.
+
+#### B. Metadata Query (`getThreat`)
+```solidity
+function getThreat(bytes32 threatHash)
+    external
+    view
+    returns (
+        ThreatType threatType,
+        uint8      verdict,
+        uint16     confidence,
+        uint64     submittedAt,
+        address    submitter
+    );
+```
+- Returns the complete recorded metadata for a registered hash.
+- **Revert Behavior**: Reverts with custom error `ThreatNotFound(bytes32 threatHash)` if `threatExists(threatHash) == false`.
+
+#### C. Threat Submission (`submitThreat`)
+```solidity
+function submitThreat(
+    bytes32    threatHash,
+    ThreatType threatType,
+    uint8      verdict,
+    uint16     confidence
+) external;
+```
+- Callable only by the contract owner (`onlyOwner`).
+- Reverts on:
+  - `threatHash == bytes32(0)` $\rightarrow$ `ZeroHash()`
+  - `_exists[threatHash] == true` $\rightarrow$ `DuplicateHash(threatHash)`
+  - `verdict > 1` $\rightarrow$ `InvalidVerdict(verdict)`
+  - `confidence > 100` $\rightarrow$ `ConfidenceOutOfRange(confidence)`
+  - `msg.sender != owner` $\rightarrow$ `NotOwner()`
+
+#### D. Ownership Management (`transferOwnership` / `owner`)
+```solidity
+function owner() external view returns (address);
+function transferOwnership(address newOwner) external;
+```
+- Single-step ownership transfer protected against `address(0)` via `ZeroAddress()`.
+
+### 5. Events Emitted
+```solidity
+event ThreatSubmitted(
+    bytes32 indexed threatHash,
+    ThreatType      threatType,
+    uint8           verdict,
+    uint16          confidence,
+    uint64          submittedAt,
+    address indexed submitter
+);
+
+event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+);
+```
+
+### 6. Validation and Revert Semantics
+The contract uses custom Solidity errors (`revert CustomError()`) for gas efficiency and clear debugging:
+- `ZeroHash`: Rejects `0x0000000000000000000000000000000000000000000000000000000000000000`.
+- `DuplicateHash(bytes32)`: Rejects re-registration of existing hashes to maintain idempotency.
+- `InvalidVerdict(uint8)`: Rejects values outside binary `0` (benign) or `1` (threat).
+- `ConfidenceOutOfRange(uint16)`: Enforces percentage range `0` to `100`.
+- `ThreatNotFound(bytes32)`: Rejects metadata queries for unregistered hashes.
+- `NotOwner()`: Rejects unauthorized submissions.
+- `ZeroAddress()`: Prevents accidental loss of contract ownership.
+
+### 7. Access Control & Permission Model
+- **Owner-Only Submissions**: Threat submission is restricted to the contract owner via the `onlyOwner` modifier.
+- **Architectural Rationale**: On a public network like Sepolia or Ethereum mainnet, open permissionless write access would allow malicious actors to flood the registry with arbitrary or false-positive hashes, polluting the fast-path cache. By restricting submissions to the deployer / backend worker address, ChainShield maintains registry integrity without complex staking, voting, or governance overhead.
+- **Academic Context**: No DAO, governance token, staking, dispute mechanism, or multi-signature scheme is implemented, keeping the contract auditable, gas-efficient, and easy to deploy via Remix IDE.
+
+### 8. Privacy Model
+- **Strict Zero-PII Policy**: The contract never accepts, stores, or emits raw text, URLs, usernames, phone numbers, IP addresses, or sender identities.
+- The off-chain pipeline irreversibly converts sensitive messages and URLs into one-way cryptographic Keccak-256 hashes before interacting with the chain.
+- Even if a phishing message contains private personal details, only the one-way hash `0x...` reaches the public ledger.
+
+### 9. What the Contract Explicitly Does NOT Do
+- Does **NOT** tokenize text, run NLTK, or perform natural language processing.
+- Does **NOT** execute machine learning models or inference.
+- Does **NOT** calculate fuzzy hashes or assess semantic similarity.
+- Does **NOT** implement user reputation, community voting, or confirmation disputes.
+- Does **NOT** store raw messages or URLs.
+- Does **NOT** provide wildcard, substring, or regex queries.
