@@ -69,18 +69,65 @@
             "week_number": 4,
             "start": "2026-09-25",
             "end": "2026-10-01",
-            "report": "weekly_reports\\week_04\\Chainshield_Week_04_Weekly_Progress_Report_Form-3_2026-10-01.pdf",
-            "total_commits": 1,
-            "total_added": 130,
-            "total_deleted": 1,
-            "total_net_loc": 129,
+            "report": "weekly_reports\\week_04\\SKIT-DS-2023-2027-016_Week_04_Weekly_Progress_Report_Form-3_2026-10-01.pdf",
+            "total_commits": 28,
+            "total_added": 1183513,
+            "total_deleted": 2048,
+            "total_net_loc": 1181465,
             "members": {
+                "Sourabh Sharma": {
+                    "commits": 18,
+                    "added": 2120,
+                    "deleted": 1434,
+                    "net_loc": 686,
+                    "active_days": 6
+                },
                 "Shrestha-Swami": {
-                    "commits": 1,
-                    "added": 130,
-                    "deleted": 1,
-                    "net_loc": 129,
+                    "commits": 6,
+                    "added": 1180891,
+                    "deleted": 611,
+                    "net_loc": 1180280,
+                    "active_days": 3
+                },
+                "Suchitra Rathore": {
+                    "commits": 2,
+                    "added": 2,
+                    "deleted": 2,
+                    "net_loc": 0,
                     "active_days": 1
+                },
+                "Suchitrarathore01": {
+                    "commits": 2,
+                    "added": 500,
+                    "deleted": 1,
+                    "net_loc": 499,
+                    "active_days": 1
+                }
+            }
+        },
+        {
+            "week_number": 5,
+            "start": "2026-10-02",
+            "end": "2026-10-08",
+            "report": "weekly_reports\\week_05\\SKIT-DS-2023-2027-016_Week_05_Weekly_Progress_Report_Form-3_2026-10-08.pdf",
+            "total_commits": 9,
+            "total_added": 4818,
+            "total_deleted": 45,
+            "total_net_loc": 4773,
+            "members": {
+                "YuvrajSingh-2003": {
+                    "commits": 6,
+                    "added": 4553,
+                    "deleted": 35,
+                    "net_loc": 4518,
+                    "active_days": 1
+                },
+                "Sourabh Sharma": {
+                    "commits": 3,
+                    "added": 265,
+                    "deleted": 10,
+                    "net_loc": 255,
+                    "active_days": 2
                 }
             }
         }

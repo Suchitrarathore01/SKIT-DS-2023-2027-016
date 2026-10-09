@@ -109,76 +109,53 @@ REPORT_HISTORY_FILE = os.path.join(
 # REPOSITORY INFORMATION
 # -------------------------------------------------------------
 
+
 def get_repo_info():
-
     """
-    Extracts the exact repository name and branch
-    reliably in GitHub Codespaces or local Git.
+    Extract the repository name from the Git remote when available.
+    Fall back to the local Git root if the remote cannot be read.
     """
-
     repo_name = "Project-Repository"
-
     branch_name = "main"
 
     try:
-
-        root_path = subprocess.check_output(
-            [
-                "git",
-                "rev-parse",
-                "--show-toplevel"
-            ],
-            encoding="utf-8"
+        remote_url = subprocess.check_output(
+            ["git", "config", "--get", "remote.origin.url"],
+            encoding="utf-8",
+            stderr=subprocess.DEVNULL,
         ).strip()
 
-        repo_name = os.path.basename(
-            root_path
-        )
-
-    except Exception:
-
-        try:
-
-            remote_url = subprocess.check_output(
-                [
-                    "git",
-                    "config",
-                    "--get",
-                    "remote.origin.url"
-                ],
-                encoding="utf-8"
-            ).strip()
-
+        if remote_url:
             repo_name = (
-                remote_url
-                .rstrip("/")
+                remote_url.rstrip("/")
                 .split("/")[-1]
-                .replace(".git", "")
+                .removesuffix(".git")
             )
+    except Exception:
+        pass
 
+    if repo_name == "Project-Repository":
+        try:
+            root_path = subprocess.check_output(
+                ["git", "rev-parse", "--show-toplevel"],
+                encoding="utf-8",
+                stderr=subprocess.DEVNULL,
+            ).strip()
+            repo_name = os.path.basename(root_path)
         except Exception:
-
-            repo_name = os.path.basename(
-                os.getcwd()
-            )
+            repo_name = os.path.basename(os.getcwd())
 
     try:
-
         branch_name = subprocess.check_output(
-            [
-                "git",
-                "rev-parse",
-                "--abbrev-ref",
-                "HEAD"
-            ],
-            encoding="utf-8"
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            encoding="utf-8",
+            stderr=subprocess.DEVNULL,
         ).strip()
-
     except Exception:
-
         pass
 
     return repo_name, branch_name
+
 
 
 # -------------------------------------------------------------
