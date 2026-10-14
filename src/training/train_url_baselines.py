@@ -10,6 +10,7 @@ from src.models.baselines.logistic_regression import (
 )
 from src.models.baselines.svm import train_svm
 from src.models.baselines.random_forest import train_random_forest
+from src.models.baselines.xgboost_model import train_xgboost
 
 
 RESULTS_DIRECTORY = Path("reports/experiments/url_baselines")
@@ -36,6 +37,7 @@ def run_url_baselines() -> pd.DataFrame:
         ("logistic_regression", train_logistic_regression),
         ("linear_svm", train_svm),
         ("random_forest", train_random_forest),
+	("xgboost", train_xgboost),
     ]
 
     rows = []
