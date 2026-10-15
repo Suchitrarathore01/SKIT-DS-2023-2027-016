@@ -14,3 +14,4 @@ py-solc-x
 web3
 python-dotenv
 xgboost
+shap
