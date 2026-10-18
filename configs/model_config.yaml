@@ -1,0 +1,61 @@
+
+# ChainShield URL baseline experiment configuration
+
+experiment:
+  name: phishing_url_baselines
+  random_state: 42
+  target_column: label
+  domain_column: Domain
+  url_column: URL
+
+data:
+  input_path: data/processed/featured_url.csv
+  split_directory: data/processed/url_splits
+  train_file: stratified_train.csv
+  validation_file: stratified_validation.csv
+  test_file: stratified_test.csv
+
+features:
+  groups:
+    - url_only
+  exclude_columns:
+    - URL
+    - Domain
+    - Title
+    - FILENAME
+  target_column: label
+
+evaluation:
+  primary_metrics:
+    - precision
+    - recall
+    - f1
+    - roc_auc
+    - pr_auc
+    - accuracy
+  validation_for_model_selection: true
+  test_for_final_evaluation_only: true
+
+models:
+  logistic_regression:
+    enabled: true
+    max_iter: 1000
+    class_weight: balanced
+
+  svm:
+    enabled: true
+    kernel: linear
+    class_weight: balanced
+
+  random_forest:
+    enabled: true
+    n_estimators: 300
+    max_depth: null
+    class_weight: balanced
+    n_jobs: -1
+
+artifacts:
+  model_directory: models/url_baselines
+  results_directory: reports/experiments/url_baselines
+  save_models: true
+  save_predictions: false

@@ -16,4 +16,5 @@ class ScanResponse(BaseModel):
     path: str
     https: bool
     uses_ip: bool
+    risk_level: str
     findings: list[str]

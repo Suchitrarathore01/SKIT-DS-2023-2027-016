@@ -60,3 +60,10 @@ def _is_ip_address(domain: str):
         return True
     except ValueError:
         return False
+def calculate_risk_level(findings: list[str]):
+    if len(findings) == 0:
+        return "SAFE"
+    elif len(findings) <= 2:
+        return "MEDIUM"
+    else:
+        return "HIGH"
