@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-PROCESSED_PATH = Path("data/processed/cleaned.csv")
+PROCESSED_PATH = Path("data/processed/categorized.csv")
 OUT_DIR = Path("data/processed")
 SEED = 42
 
@@ -14,10 +14,10 @@ def split():
     df = pd.read_csv(PROCESSED_PATH)
 
     train, temp = train_test_split(
-        df, test_size=0.30, stratify=df["label"], random_state=SEED
+        df, test_size=0.30, stratify=df["category"], random_state=SEED
     )
     val, test = train_test_split(
-        temp, test_size=0.50, stratify=temp["label"], random_state=SEED
+        temp, test_size=0.50, stratify=temp["category"], random_state=SEED
     )
 
     train.to_csv(OUT_DIR / "train.csv", index=False)

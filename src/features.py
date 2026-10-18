@@ -256,3 +256,106 @@ def build_tfidf_features(
     vectorizer = TfidfVectorizer(**vectorizer_params)
     features = vectorizer.fit_transform(texts)
     return features, vectorizer
+
+
+URL_REPLACEMENT_PATTERN = re.compile(
+    r"(?:https?://|ftp://|www\.)[^\s<>{}\"']+"
+    r"|(?:https?://)?(?:"
+    + "|".join(re.escape(d) for d in sorted(SHORTENER_DOMAINS, key=len, reverse=True))
+    + r")(?:/[^\s<>{}\"']*)?"
+    r"|(?:https?://)?\b(?:\d{1,3}\.){3}\d{1,3}(?::\d{1,5})?(?:/[^\s<>{}\"']*)?"
+    r"|\b[a-zA-Z0-9.-]+\.(?:com|org|net|edu|gov|io|co|xyz|info|biz|cc|tv|me|site|online|top|club|vip|app|dev|tech)(?:/[^\s<>{}\"']*)?",
+    re.IGNORECASE,
+)
+
+PHONE_AND_DIGITS_PATTERN = re.compile(
+    r"(?:\+?\d{1,4}[-.\s]?)?(?:\(?\d{2,5}\)?[-.\s]?)?\d{3,5}[-.\s]?\d{3,5}\b"
+    r"|\b\d{5,}\b"
+    r"|\d{5,}"
+)
+
+_NLTK_INITIALIZED = False
+_STOPWORDS = None
+_LEMMATIZER = None
+
+
+def _ensure_nltk_resources() -> None:
+    """Download required NLTK datasets on first use and initialize stopwords and lemmatizer."""
+    global _NLTK_INITIALIZED, _STOPWORDS, _LEMMATIZER
+    if _NLTK_INITIALIZED:
+        return
+
+    import nltk
+
+    for resource in ("stopwords", "wordnet", "omw-1.4"):
+        try:
+            nltk.download(resource, quiet=True)
+        except Exception:
+            pass
+
+    try:
+        from nltk.corpus import stopwords
+
+        sw = set(stopwords.words("english"))
+    except Exception:
+        sw = set()
+
+    # Scam signals that must be preserved
+    scam_signals = {"now", "free", "win", "call", "stop", "urgent", "your", "you"}
+    _STOPWORDS = sw - scam_signals
+
+    try:
+        from nltk.stem import WordNetLemmatizer
+
+        _LEMMATIZER = WordNetLemmatizer()
+    except Exception:
+        _LEMMATIZER = None
+
+    _NLTK_INITIALIZED = True
+
+
+def preprocess_text(text: str) -> str:
+    """Preprocess text by cleaning, replacing tokens, removing stopwords, and lemmatizing.
+
+    Processing pipeline:
+    1. Lowercase text.
+    2. Replace URLs with the token 'urltoken'.
+    3. Replace phone numbers and other digit runs of 5+ digits with 'numtoken'.
+    4. Remove punctuation.
+    5. Remove English stopwords using NLTK, but keep scam signal words:
+       ('now', 'free', 'win', 'call', 'stop', 'urgent', 'your', 'you').
+    6. Lemmatize remaining tokens using NLTK WordNetLemmatizer.
+
+    Args:
+        text: Input string to preprocess.
+
+    Returns:
+        str: Preprocessed string.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return ""
+
+    _ensure_nltk_resources()
+
+    # 1. Lowercase
+    cleaned = text.lower()
+
+    # 2. Replace URLs with 'urltoken'
+    cleaned = URL_REPLACEMENT_PATTERN.sub("urltoken", cleaned)
+
+    # 3. Replace phone numbers and digit runs of 5+ digits with 'numtoken'
+    cleaned = PHONE_AND_DIGITS_PATTERN.sub("numtoken", cleaned)
+
+    # 4. Remove punctuation
+    cleaned = re.sub(r"[\W_]+", " ", cleaned)
+
+    # 5. Remove English stopwords (keeping scam signals)
+    tokens = cleaned.split()
+    if _STOPWORDS is not None:
+        tokens = [w for w in tokens if w not in _STOPWORDS]
+
+    # 6. Lemmatize with WordNetLemmatizer
+    if _LEMMATIZER is not None:
+        tokens = [_LEMMATIZER.lemmatize(w) for w in tokens]
+
+    return " ".join(tokens)

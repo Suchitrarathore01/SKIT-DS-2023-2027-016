@@ -5,6 +5,7 @@ from src.features import (
     extract_url_features,
     extract_text_features,
     build_tfidf_features,
+    preprocess_text,
 )
 
 
@@ -204,3 +205,142 @@ class TestBuildTfidfFeatures:
         features, vectorizer = build_tfidf_features(sample_texts, max_features=10)
         assert vectorizer.max_features == 10
         assert features.shape[1] <= 10
+
+
+class TestPreprocessText:
+    """Tests for preprocess_text(text: str) -> str."""
+
+    def test_empty_and_non_string_inputs(self):
+        assert preprocess_text("") == ""
+        assert preprocess_text("   ") == ""
+        assert preprocess_text(None) == ""
+        assert preprocess_text(12345) == ""
+
+    def test_lowercasing(self):
+        res = preprocess_text("URGENT ALERT NOW")
+        assert "URGENT" not in res
+        assert "ALERT" not in res
+        assert "urgent" in res
+        assert "now" in res
+
+    @pytest.mark.parametrize(
+        "url_text",
+        [
+            "Visit https://example.com/login today",
+            "Go to http://phishing-portal.com/account",
+            "Check www.fake-bank.org immediately",
+            "Claim prize at bit.ly/prize2026 now",
+            "Link cutt.ly/discount for rewards",
+            "Access http://192.168.1.1:8080/admin",
+            "Visit tinyurl.com/free-card immediately",
+        ],
+    )
+    def test_url_replacement(self, url_text):
+        res = preprocess_text(url_text)
+        assert "urltoken" in res
+        assert "http" not in res
+        assert "www" not in res
+        assert ".com" not in res
+        assert ".org" not in res
+
+    def test_url_with_parameters_and_digits(self):
+        text = "Visit https://secure.bank.com/verify?id=12345678&token=abcdef now"
+        res = preprocess_text(text)
+        assert "urltoken" in res
+        assert "12345678" not in res
+
+    @pytest.mark.parametrize(
+        "phone_text",
+        [
+            "Call 800-555-0199 for assistance",
+            "Call +1-800-555-0199 immediately",
+            "Reach us at (800) 555-0199 today",
+            "Call +1 (800) 555-0199 right now",
+            "Dial 800.555.0199 now",
+            "Call +44 7911 123456 for free advice",
+            "Call 0800 123 4567 today",
+        ],
+    )
+    def test_phone_number_replacement(self, phone_text):
+        res = preprocess_text(phone_text)
+        assert "numtoken" in res
+        assert "555" not in res
+        assert "0199" not in res
+        assert "123456" not in res
+
+    @pytest.mark.parametrize(
+        "digits_text",
+        [
+            "Your verification code is 12345",
+            "Account number 9876543210 is flagged",
+            "Reference id 99999999",
+        ],
+    )
+    def test_digit_runs_replacement_5_or_more(self, digits_text):
+        res = preprocess_text(digits_text)
+        assert "numtoken" in res
+        assert "12345" not in res
+        assert "9876543210" not in res
+        assert "99999999" not in res
+
+    def test_short_digits_not_replaced(self):
+        text = "Your pin is 1234 and year is 2026"
+        res = preprocess_text(text)
+        assert "numtoken" not in res
+        assert "1234" in res
+        assert "2026" in res
+
+    def test_punctuation_removal(self):
+        text = "Urgent: call now! Free prizes, rewards & bonus money... win-win?!"
+        res = preprocess_text(text)
+        for char in ":!.,&?":
+            assert char not in res
+
+    def test_stopword_removal(self):
+        text = "This is a message from the system in the office with information"
+        res = preprocess_text(text)
+        tokens = res.split()
+        for sw in ["this", "is", "a", "from", "the", "in", "with"]:
+            assert sw not in tokens
+        assert "message" in tokens
+        assert "system" in tokens
+        assert "information" in tokens
+
+    def test_free_and_now_kept(self):
+        text = "Claim your free prize now! It is free right now."
+        res = preprocess_text(text)
+        tokens = set(res.split())
+        assert "free" in tokens
+        assert "now" in tokens
+        assert "is" not in tokens
+        assert "it" not in tokens
+
+    def test_all_scam_signals_kept(self):
+        text = "Urgent! You should call and stop immediately to win your free gift now."
+        res = preprocess_text(text)
+        tokens = set(res.split())
+        for signal in ["now", "free", "win", "call", "stop", "urgent", "your", "you"]:
+            assert signal in tokens
+        assert "and" not in tokens
+        assert "to" not in tokens
+
+    def test_lemmatization(self):
+        text = "Users received multiple prizes, cars, and alerts"
+        res = preprocess_text(text)
+        tokens = res.split()
+        assert "user" in tokens
+        assert "prize" in tokens
+        assert "car" in tokens
+        assert "alert" in tokens
+
+    def test_combined_phishing_message(self):
+        text = "URGENT: Win $50000 cash now! Call 1-800-555-0199 or click https://bank-scam.com/claim for free gift."
+        res = preprocess_text(text)
+        assert "urltoken" in res
+        assert "numtoken" in res
+        assert "urgent" in res
+        assert "win" in res
+        assert "now" in res
+        assert "call" in res
+        assert "free" in res
+        assert "or" not in res.split()
