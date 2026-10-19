@@ -1,3 +1,4 @@
+
 import logging
 
 from fastapi import APIRouter, Depends
@@ -5,22 +6,22 @@ from sqlalchemy.orm import Session
 
 from app.schemas.scan import ScanRequest, ScanResponse
 from app.services.url_processor import process_url
+from app.services.blockchain_checker import check_blockchain_threat
 from app.services.security_checker import (
     check_url_security,
-    calculate_risk_level
+    calculate_risk_level,
 )
 from app.services.scan_database import save_scan, get_scans
 from app.database.dependencies import get_db
 
 router = APIRouter()
-
 logger = logging.getLogger(__name__)
 
 
 @router.post("/scan", response_model=ScanResponse)
 def scan_url(
     request: ScanRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     logger.info("Scan request received")
 
@@ -30,8 +31,34 @@ def scan_url(
         # Process URL
         processed_url = process_url(url)
 
-        # Security checks
+        # Perform normal security checks
         security_result = check_url_security(url)
+
+        # Read-only blockchain lookup; normal scanning must continue
+        # even if the blockchain service unexpectedly fails.
+        blockchain_result = {
+            "available": False,
+            "found": False,
+            "verdict": None,
+            "threat_type": None,
+            "confidence": None,
+            "error": None,
+        }
+
+        try:
+            blockchain_result = check_blockchain_threat(url)
+        except Exception:
+            logger.exception("Unexpected blockchain lookup failure")
+
+        # Add a finding only when the registry confirms a threat
+        if (
+            blockchain_result.get("available", False)
+            and blockchain_result.get("found", False)
+            and blockchain_result.get("verdict") == 1
+        ):
+            security_result["findings"].append(
+                "Blockchain registry identifies this URL as a threat"
+            )
 
         # Calculate risk level
         risk_level = calculate_risk_level(
@@ -49,7 +76,13 @@ def scan_url(
             "https": security_result["https"],
             "uses_ip": security_result["uses_ip"],
             "risk_level": risk_level,
-            "findings": security_result["findings"]
+            "findings": security_result["findings"],
+            "blockchain_available": blockchain_result.get(
+                "available", False
+            ),
+            "blockchain_found": blockchain_result.get(
+                "found", False
+            ),
         }
 
         # Save scan result to database
@@ -70,12 +103,14 @@ def scan_url(
             "https": False,
             "uses_ip": False,
             "risk_level": "UNKNOWN",
-            "findings": []
+            "findings": [],
+            "blockchain_available": False,
+            "blockchain_found": False,
         }
 
 
 @router.get("/scan/history")
 def scan_history(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     return get_scans(db)

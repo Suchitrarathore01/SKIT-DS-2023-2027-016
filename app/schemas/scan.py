@@ -18,3 +18,5 @@ class ScanResponse(BaseModel):
     uses_ip: bool
     risk_level: str
     findings: list[str]
+    blockchain_available: bool = False
+    blockchain_found: bool = False
