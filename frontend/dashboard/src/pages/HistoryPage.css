@@ -1,0 +1,147 @@
+/* ── History page layout ───────────────────────────────────── */
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.history-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ── Note ──────────────────────────────────────────────────── */
+.history-note {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+}
+
+/* ── Table wrapper ─────────────────────────────────────────── */
+.history-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── Column header row ─────────────────────────────────────── */
+.history-table-header {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Shared column widths ──────────────────────────────────── */
+.history-col { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-col-id     { width: 40px; flex-shrink: 0; }
+.history-col-url    { flex: 1; min-width: 0; }
+.history-col-domain { width: 160px; flex-shrink: 0; font-family: var(--font-mono); font-size: var(--text-sm); }
+.history-col-badge  { width: 90px; flex-shrink: 0; }
+
+/* ── History list ──────────────────────────────────────────── */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── History row (clickable button) ────────────────────────── */
+.history-item {
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  transition: background var(--transition-fast);
+}
+.history-row:hover {
+  background: var(--color-bg-subtle);
+}
+.history-col-id {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+.history-col-url {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* ── Chevron ───────────────────────────────────────────────── */
+.history-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  transition: transform var(--transition-fast);
+}
+.history-chevron-open {
+  transform: rotate(180deg);
+}
+
+/* ── Expanded detail ───────────────────────────────────────── */
+.history-detail {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-4);
+  background: var(--color-bg-subtle);
+}
+/* Override card margin inside history detail */
+.history-detail .scan-result {
+  margin-top: 0;
+}
+
+/* ── Skeleton rows ─────────────────────────────────────────── */
+.history-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.history-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+}
+
+/* ── Count ─────────────────────────────────────────────────── */
+.history-count {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+/* ── Empty hint ────────────────────────────────────────────── */
+.empty-hint {
+  font-size: var(--text-sm);
+}
+
+/* ── Responsive: hide domain column on small screens ──────── */
+@media (max-width: 640px) {
+  .history-col-domain { display: none; }
+}

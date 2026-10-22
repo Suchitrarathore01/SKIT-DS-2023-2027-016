@@ -1,0 +1,66 @@
+/* ── Scanner form ──────────────────────────────────────────── */
+.url-scanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.scanner-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.scanner-input-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.scanner-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.scanner-validation-error {
+  font-size: var(--text-sm);
+  color: var(--color-high);
+}
+
+/* ── Error display ─────────────────────────────────────────── */
+.scanner-error {
+  margin-top: 0;
+}
+.scanner-error-hint {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  opacity: 0.8;
+}
+.scanner-error-hint code {
+  font-family: var(--font-mono);
+  background: rgba(185, 28, 28, 0.08);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Skeleton ──────────────────────────────────────────────── */
+.scan-skeleton {
+  margin-top: 0;
+}
+
+/* ── Clear button ──────────────────────────────────────────── */
+.scanner-clear-btn {
+  align-self: flex-start;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 580px) {
+  .scanner-input-row {
+    flex-direction: column;
+  }
+  .scanner-input-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
