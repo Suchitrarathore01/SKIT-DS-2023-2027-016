@@ -1,0 +1,11 @@
+.scanner-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.scanner-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

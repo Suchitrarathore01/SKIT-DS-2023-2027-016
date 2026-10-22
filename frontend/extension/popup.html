@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChainShield</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <header class="header">
+      <svg class="header-logo" viewBox="0 0 32 36" fill="none" aria-hidden="true">
+        <path d="M16 2L3 8v10c0 7.6 5.5 14.7 13 17 7.5-2.3 13-9.4 13-17V8L16 2z"
+              fill="#0e7490" stroke="#0c6680" stroke-width="1.5"/>
+        <path d="M10 18l4 4 8-8" stroke="#fff" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="header-text">
+        <span class="header-name">ChainShield</span>
+        <span class="header-sub">URL Threat Detector</span>
+      </div>
+    </header>
+
+    <!-- ── Scanner form ───────────────────────────────────── -->
+    <main class="main">
+      <form id="scan-form" novalidate>
+        <div class="input-row">
+          <label for="url-input" class="sr-only">URL to scan</label>
+          <input
+            id="url-input"
+            type="url"
+            class="input"
+            placeholder="https://example.com"
+            autocomplete="url"
+            spellcheck="false"
+          />
+          <button type="submit" class="btn btn-primary" id="scan-btn">
+            Scan
+          </button>
+        </div>
+        <p id="validation-msg" class="validation-msg" role="alert" hidden></p>
+      </form>
+
+      <!-- ── States ─────────────────────────────────────── -->
+      <div id="state-idle"    class="state state-idle">
+        <p class="idle-hint">Enter a URL above to check it for phishing indicators.</p>
+      </div>
+
+      <div id="state-loading" class="state state-loading" hidden aria-busy="true" aria-label="Scanning…">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Scanning…</p>
+      </div>
+
+      <div id="state-error"   class="state state-error"   hidden role="alert">
+        <p id="error-msg" class="error-msg"></p>
+        <p id="error-hint" class="error-hint" hidden></p>
+      </div>
+
+      <div id="state-result"  class="state state-result"  hidden>
+        <!-- Risk verdict -->
+        <div class="result-header">
+          <span id="result-badge" class="badge" aria-label="Risk level"></span>
+          <span id="result-domain" class="result-domain"></span>
+        </div>
+
+        <!-- Detail pills -->
+        <div class="detail-row" id="detail-https">
+          <span class="detail-label">HTTPS</span>
+          <span id="detail-https-val" class="pill"></span>
+        </div>
+        <div class="detail-row" id="detail-ip">
+          <span class="detail-label">Uses IP</span>
+          <span id="detail-ip-val" class="pill"></span>
+        </div>
+
+        <!-- Blockchain -->
+        <div id="blockchain-section" class="blockchain-section" hidden>
+          <p id="blockchain-msg" class="blockchain-msg"></p>
+        </div>
+
+        <!-- Findings -->
+        <div id="findings-section" class="findings-section" hidden>
+          <p class="findings-title">Findings</p>
+          <ul id="findings-list" class="findings-list"></ul>
+        </div>
+
+        <!-- No issues -->
+        <p id="no-findings" class="no-findings" hidden>
+          No heuristic issues detected.
+        </p>
+
+        <!-- Disclaimer -->
+        <p class="disclaimer">
+          Results are informational. A clean result does not guarantee safety.
+        </p>
+      </div>
+    </main>
+
+    <!-- ── Footer: link to dashboard ──────────────────────── -->
+    <footer class="footer">
+      <a id="dashboard-link" href="#" target="_blank" rel="noopener" class="dashboard-link" hidden>
+        Open Dashboard ↗
+      </a>
+      <span class="footer-name">ChainShield · v0.1.0</span>
+    </footer>
+
+    <script src="src/popup.js"></script>
+  </body>
+</html>
